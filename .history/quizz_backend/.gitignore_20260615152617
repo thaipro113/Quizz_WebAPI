@@ -1,7 +1,0 @@
-DB_NAME=demojango
-DB_USER=postgres
-DB_PASSWORD=12345
-DB_HOST=127.0.0.1
-DB_PORT=5432
-SECRET_KEY=django-insecure-ytwhdxuum(edy&@xc&(-t1v#la(tpvy+*=h6#0hmgj^3t@9*vd
-DEBUG=True
