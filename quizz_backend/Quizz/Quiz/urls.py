@@ -1,7 +1,7 @@
 from django.urls import path
-from Quizz.Quiz.view import QuizViewSet, QuizDetail
+from Quizz.Quiz.views import QuizListCreateView, QuizDetailView
 
 urlpatterns = [
-    path('quizzes/', QuizViewSet.as_view(), name='quiz-list'),
-    path('quizzes/<int:pk>/', QuizDetail.as_view(), name='quiz-detail'),
+    path('', QuizListCreateView.as_view(), name='quiz_list_create'),
+    path('<int:pk>/', QuizDetailView.as_view(), name='quiz_detail'),
 ]
