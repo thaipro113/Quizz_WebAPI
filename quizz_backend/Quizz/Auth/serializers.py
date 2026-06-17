@@ -22,16 +22,20 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-        token['role'] = user.role
+        # Nếu là superuser hoặc staff, tự động ánh xạ quyền admin
+        role = 'admin' if user.is_superuser or user.is_staff else user.role
+        token['role'] = role
         token['username'] = user.username
         return token
 
     def validate(self, attrs):
         data = super().validate(attrs)
+        # Nếu là superuser hoặc staff, tự động ánh xạ quyền admin
+        role = 'admin' if self.user.is_superuser or self.user.is_staff else self.user.role
         data['user'] = {
             'id': self.user.id,
             'username': self.user.username,
             'email': self.user.email,
-            'role': self.user.role
+            'role': role
         }
         return data

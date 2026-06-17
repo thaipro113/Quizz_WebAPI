@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.filters import SearchFilter
 from Quizz.models import User
 from Quizz.User.serializers import UserSerializer
-from Quizz.permissions import IsAdminUserRole
+from Quizz.permissions import IsAdminUserRole, IsTeacherOrAdmin
 from Quizz.schemas import (
     user_list_schema,
     user_create_schema,
@@ -17,7 +17,7 @@ from Quizz.schemas import (
 class UserListCreateView(generics.ListCreateAPIView):
     queryset = User.objects.all().order_by('-id')
     serializer_class = UserSerializer
-    permission_classes = [IsAdminUserRole]
+    permission_classes = [IsTeacherOrAdmin]
     filter_backends = [SearchFilter]
     search_fields = ['username', 'email']
 

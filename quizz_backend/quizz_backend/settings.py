@@ -160,4 +160,5 @@ SWAGGER_SETTINGS = {
         }
     },
     'USE_SESSION_AUTH': False,
-}
+    'DEFAULT_MODEL_RENDERING': 'example',   
+}
