@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { quizService } from '../services/quiz';
 import { authService } from '../services/auth';
 
-export default function QuizList({ onSelectQuiz, onSelectLeaderboard, onSelectAnalytics }) {
+export default function QuizList() {
+  const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchDesc, setSearchDesc] = useState('');
@@ -246,7 +248,7 @@ export default function QuizList({ onSelectQuiz, onSelectLeaderboard, onSelectAn
                             {/* Nút Làm bài chỉ hiển thị cho Học sinh */}
                             {!isTeacherOrAdmin ? (
                               <button
-                                onClick={() => onSelectQuiz(quiz)}
+                                onClick={() => navigate(`/quizzes/${quiz.id}/exam`)}
                                 className="btn-start-table"
                                 title="Làm bài thi"
                               >
@@ -256,7 +258,7 @@ export default function QuizList({ onSelectQuiz, onSelectLeaderboard, onSelectAn
                               /* Nút xem Bảng xếp hạng và Thống kê chỉ hiển thị cho Giáo viên / Admin */
                               <>
                                 <button
-                                  onClick={() => onSelectLeaderboard(quiz)}
+                                  onClick={() => navigate(`/quizzes/${quiz.id}/leaderboard`)}
                                   className="btn-action"
                                   title="Bảng xếp hạng"
                                   style={{ color: 'var(--warning)', borderColor: 'var(--warning)' }}
@@ -264,7 +266,7 @@ export default function QuizList({ onSelectQuiz, onSelectLeaderboard, onSelectAn
                                   <i className="fa-solid fa-trophy"></i>
                                 </button>
                                 <button
-                                  onClick={() => onSelectAnalytics(quiz)}
+                                  onClick={() => navigate(`/quizzes/${quiz.id}/analytics`)}
                                   className="btn-action"
                                   title="Thống kê phân tích"
                                   style={{ color: 'var(--primary)', borderColor: 'var(--primary)' }}

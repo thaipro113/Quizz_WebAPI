@@ -1,17 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { quizService } from '../services/quiz';
 
-export default function QuizLeaderboard({ quiz, onBack }) {
+export default function QuizLeaderboard() {
+  const { quizId } = useParams();
+  const navigate = useNavigate();
+
+  const [quiz, setQuiz] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
+    const fetchQuizAndLeaderboard = async () => {
       setLoading(true);
       try {
-        const data = await quizService.getQuizLeaderboard(quiz.id);
-        setLeaderboard(data);
+        const [quizData, leaderboardData] = await Promise.all([
+          quizService.getQuizDetail(quizId),
+          quizService.getQuizLeaderboard(quizId)
+        ]);
+        setQuiz(quizData);
+        setLeaderboard(leaderboardData);
         setError('');
       } catch (err) {
         console.error(err);
@@ -20,8 +29,8 @@ export default function QuizLeaderboard({ quiz, onBack }) {
         setLoading(false);
       }
     };
-    fetchLeaderboard();
-  }, [quiz]);
+    fetchQuizAndLeaderboard();
+  }, [quizId]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -54,6 +63,25 @@ export default function QuizLeaderboard({ quiz, onBack }) {
     return <span style={{ fontWeight: '700', color: 'var(--text-muted)' }}>{rank}</span>;
   };
 
+  if (loading && !quiz) {
+    return <div className="loading-spinner">Đang tải bảng xếp hạng...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="loading-spinner" style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+        <div className="alert-error" style={{ maxWidth: '450px' }}>
+          <i className="fa-solid fa-triangle-exclamation"></i> {error}
+        </div>
+        <button onClick={() => navigate('/quizzes')} className="btn-reset" style={{ padding: '10px 20px' }}>
+          Quay lại trang chủ
+        </button>
+      </div>
+    );
+  }
+
+  if (!quiz) return null;
+
   return (
     <div className="quiz-list-container">
       {/* Title Header Section */}
@@ -67,18 +95,12 @@ export default function QuizLeaderboard({ quiz, onBack }) {
       <div className="quiz-grid-section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: '1px solid var(--border)' }}>
           <h3 style={{ borderBottom: 'none', paddingBottom: '0', margin: '0' }}>Top 10 Lượt Thi Cao Nhất</h3>
-          <button onClick={onBack} className="btn-reset" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+          <button onClick={() => navigate('/quizzes')} className="btn-reset" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
             <i className="fa-solid fa-arrow-left"></i> Quay lại
           </button>
         </div>
 
-        {loading ? (
-          <div className="loading-spinner">Đang tải bảng xếp hạng...</div>
-        ) : error ? (
-          <div className="alert-error" style={{ margin: '16px' }}>
-            <i className="fa-solid fa-triangle-exclamation"></i> {error}
-          </div>
-        ) : leaderboard.length === 0 ? (
+        {leaderboard.length === 0 ? (
           <div className="empty-state">Chưa có lượt thi nào cho đề thi này. Hãy là người đầu tiên làm bài!</div>
         ) : (
           <div className="table-responsive">
@@ -104,7 +126,7 @@ export default function QuizLeaderboard({ quiz, onBack }) {
                     <tr key={item.id} style={rank <= 3 ? { backgroundColor: 'rgba(245, 158, 11, 0.03)' } : {}}>
                       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{getRankBadge(rank)}</td>
                       <td style={{ fontWeight: '700', color: 'var(--text-dark)' }}>
-                        {item.user?.username || 'Học sinh ẩn danh'}
+                        {item.user_detail?.username || item.user?.username || 'Học sinh ẩn danh'}
                       </td>
                       <td style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--primary)' }}>
                         {item.score} / {item.total_questions}

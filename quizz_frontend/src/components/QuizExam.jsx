@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { quizService } from '../services/quiz';
 
-export default function QuizExam({ quiz, onCancel, onSubmitSuccess }) {
+export default function QuizExam() {
+  const { quizId } = useParams();
+  const navigate = useNavigate();
+
+  const [quiz, setQuiz] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -12,15 +17,20 @@ export default function QuizExam({ quiz, onCancel, onSubmitSuccess }) {
   const [initialTimeLimit, setInitialTimeLimit] = useState(0);
 
   useEffect(() => {
-    const fetchQuestions = async () => {
+    const fetchQuizAndQuestions = async () => {
       setLoading(true);
       try {
-        const data = await quizService.getQuizQuestions(quiz.id);
-        const sortedQuestions = data.sort((a, b) => (a.order || 0) - (b.order || 0));
+        const [quizData, questionsData] = await Promise.all([
+          quizService.getQuizDetail(quizId),
+          quizService.getQuizQuestions(quizId)
+        ]);
+
+        setQuiz(quizData);
+        const sortedQuestions = questionsData.sort((a, b) => (a.order || 0) - (b.order || 0));
         setQuestions(sortedQuestions);
         setError('');
         
-        const limitInSeconds = (quiz.time_limit || 30) * 60;
+        const limitInSeconds = (quizData.time_limit || 30) * 60;
         setTimeLeft(limitInSeconds);
         setInitialTimeLimit(limitInSeconds);
       } catch (err) {
@@ -30,8 +40,8 @@ export default function QuizExam({ quiz, onCancel, onSubmitSuccess }) {
         setLoading(false);
       }
     };
-    fetchQuestions();
-  }, [quiz]);
+    fetchQuizAndQuestions();
+  }, [quizId]);
 
   useEffect(() => {
     if (loading || error || questions.length === 0) return;
@@ -56,8 +66,8 @@ export default function QuizExam({ quiz, onCancel, onSubmitSuccess }) {
     }));
     
     try {
-      const result = await quizService.submitQuiz(quiz.id, formattedAnswers, initialTimeLimit);
-      onSubmitSuccess(result, questions);
+      const result = await quizService.submitQuiz(quizId, formattedAnswers, initialTimeLimit);
+      navigate(`/results/${result.id}`);
     } catch (err) {
       console.error(err);
       alert('Gặp lỗi khi tự động nộp bài làm.');
@@ -86,8 +96,8 @@ export default function QuizExam({ quiz, onCancel, onSubmitSuccess }) {
 
     try {
       setLoading(true);
-      const result = await quizService.submitQuiz(quiz.id, formattedAnswers, completedTime);
-      onSubmitSuccess(result, questions);
+      const result = await quizService.submitQuiz(quizId, formattedAnswers, completedTime);
+      navigate(`/results/${result.id}`);
     } catch (err) {
       console.error(err);
       alert('Nộp bài thất bại. Vui lòng thử lại.');
@@ -108,7 +118,7 @@ export default function QuizExam({ quiz, onCancel, onSubmitSuccess }) {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (loading && questions.length === 0) {
+  if (loading && !quiz) {
     return <div className="loading-spinner">Đang chuẩn bị đề thi...</div>;
   }
 
@@ -118,12 +128,14 @@ export default function QuizExam({ quiz, onCancel, onSubmitSuccess }) {
         <div className="alert-error" style={{ maxWidth: '400px' }}>
           <i className="fa-solid fa-triangle-exclamation"></i> {error}
         </div>
-        <button onClick={onCancel} className="btn-reset" style={{ padding: '10px 20px' }}>
+        <button onClick={() => navigate('/quizzes')} className="btn-reset" style={{ padding: '10px 20px' }}>
           Quay lại danh sách
         </button>
       </div>
     );
   }
+
+  if (!quiz) return null;
 
   const currentQuestion = questions[currentIndex];
   const choicePrefixes = ['A', 'B', 'C', 'D', 'E', 'F'];

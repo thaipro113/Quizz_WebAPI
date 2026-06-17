@@ -1,17 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { quizService } from '../services/quiz';
 
-export default function QuizAnalytics({ quiz, onBack }) {
+export default function QuizAnalytics() {
+  const { quizId } = useParams();
+  const navigate = useNavigate();
+
+  const [quiz, setQuiz] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
+    const fetchQuizAndAnalytics = async () => {
       setLoading(true);
       try {
-        const data = await quizService.getQuizAnalytics(quiz.id);
-        setAnalytics(data);
+        const [quizData, analyticsData] = await Promise.all([
+          quizService.getQuizDetail(quizId),
+          quizService.getQuizAnalytics(quizId)
+        ]);
+        setQuiz(quizData);
+        setAnalytics(analyticsData);
         setError('');
       } catch (err) {
         console.error(err);
@@ -20,8 +29,27 @@ export default function QuizAnalytics({ quiz, onBack }) {
         setLoading(false);
       }
     };
-    fetchAnalytics();
-  }, [quiz]);
+    fetchQuizAndAnalytics();
+  }, [quizId]);
+
+  if (loading && !quiz) {
+    return <div className="loading-spinner">Đang tải số liệu thống kê...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="loading-spinner" style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+        <div className="alert-error" style={{ maxWidth: '500px' }}>
+          <i className="fa-solid fa-triangle-exclamation"></i> {error}
+        </div>
+        <button onClick={() => navigate('/quizzes')} className="btn-reset" style={{ padding: '10px 20px' }}>
+          <i className="fa-solid fa-arrow-left"></i> Quay lại trang chủ
+        </button>
+      </div>
+    );
+  }
+
+  if (!quiz) return null;
 
   return (
     <div className="quiz-list-container">
@@ -33,18 +61,7 @@ export default function QuizAnalytics({ quiz, onBack }) {
         <h3 className="exam-quiz-title">{quiz.title}</h3>
       </div>
 
-      {loading ? (
-        <div className="loading-spinner">Đang tải số liệu thống kê...</div>
-      ) : error ? (
-        <div className="loading-spinner" style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
-          <div className="alert-error" style={{ maxWidth: '500px' }}>
-            <i className="fa-solid fa-triangle-exclamation"></i> {error}
-          </div>
-          <button onClick={onBack} className="btn-reset" style={{ padding: '10px 20px' }}>
-            <i className="fa-solid fa-arrow-left"></i> Quay lại trang chủ
-          </button>
-        </div>
-      ) : analytics && (
+      {analytics && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Summary Cards */}
           <div className="quiz-list-hero">
@@ -93,7 +110,7 @@ export default function QuizAnalytics({ quiz, onBack }) {
           <div className="quiz-grid-section" style={{ padding: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '16px', marginBottom: '20px' }}>
               <h3 style={{ borderBottom: 'none', paddingBottom: '0', margin: '0' }}>Đánh Giá Sơ Bộ</h3>
-              <button onClick={onBack} className="btn-reset" style={{ padding: '8px 16px' }}>
+              <button onClick={() => navigate('/quizzes')} className="btn-reset" style={{ padding: '8px 16px' }}>
                 <i className="fa-solid fa-arrow-left"></i> Quay lại
               </button>
             </div>

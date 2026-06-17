@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth';
 
-export default function Profile({ onBack }) {
+export default function Profile() {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -107,7 +109,7 @@ export default function Profile({ onBack }) {
               </div>
             </div>
 
-            <button type="button" className="btn-primary" onClick={onBack} style={{ marginTop: '16px' }}>
+            <button type="button" className="btn-primary" onClick={() => navigate('/quizzes')} style={{ marginTop: '16px' }}>
               <i className="fa-solid fa-arrow-left"></i> Quay lại trang chủ
             </button>
           </div>

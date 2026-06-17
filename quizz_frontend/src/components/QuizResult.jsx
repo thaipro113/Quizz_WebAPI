@@ -1,9 +1,65 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { quizService } from '../services/quiz';
 
-export default function QuizResult({ result, questions, userAnswers, onBack }) {
-  // `result` format: { result_id, score, total_questions, percentage, completed_time }
-  // `questions` is the array of all questions
-  // `userAnswers` format: { question_id: selected_answer_id }
+export default function QuizResult() {
+  const { resultId } = useParams();
+  const navigate = useNavigate();
+
+  const [result, setResult] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [userAnswers, setUserAnswers] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchResultData = async () => {
+      setLoading(true);
+      try {
+        const resultData = await quizService.getResultDetail(resultId);
+        setResult(resultData);
+        
+        // Fetch questions for this quiz
+        const questionsData = await quizService.getQuizQuestions(resultData.quiz);
+        setQuestions(questionsData.sort((a, b) => (a.order || 0) - (b.order || 0)));
+        
+        // Map user answers
+        const mapping = {};
+        if (resultData.user_answers) {
+          resultData.user_answers.forEach(ua => {
+            mapping[ua.question] = ua.selected_answer;
+          });
+        }
+        setUserAnswers(mapping);
+        setError('');
+      } catch (err) {
+        console.error(err);
+        setError('Không thể tải thông tin kết quả thi.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchResultData();
+  }, [resultId]);
+
+  if (loading && !result) {
+    return <div className="loading-spinner">Đang tải kết quả...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="loading-spinner" style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+        <div className="alert-error" style={{ maxWidth: '400px' }}>
+          <i className="fa-solid fa-triangle-exclamation"></i> {error}
+        </div>
+        <button onClick={() => navigate('/quizzes')} className="btn-reset" style={{ padding: '10px 20px' }}>
+          Quay lại trang chủ
+        </button>
+      </div>
+    );
+  }
+
+  if (!result) return null;
 
   const scoreOutOf10 = result.total_questions > 0 
     ? ((result.score / result.total_questions) * 10).toFixed(1)
@@ -57,7 +113,7 @@ export default function QuizResult({ result, questions, userAnswers, onBack }) {
             </div>
             
             <button
-              onClick={onBack}
+              onClick={() => navigate('/quizzes')}
               className="btn-back-to-course"
             >
               <i className="fa-solid fa-house"></i> Quay lại trang chủ

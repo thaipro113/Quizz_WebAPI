@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export default function Register({ onRegister, onSwitchToLogin }) {
+export default function Register({ onRegister }) {
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +29,7 @@ export default function Register({ onRegister, onSwitchToLogin }) {
       await onRegister(username, email, password, role);
       setSuccess('Đăng ký tài khoản thành công! Đang chuyển hướng sang Đăng nhập...');
       setTimeout(() => {
-        onSwitchToLogin();
+        navigate('/login');
       }, 1500);
     } catch (err) {
       let errMsg = 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.';
@@ -152,7 +154,7 @@ export default function Register({ onRegister, onSwitchToLogin }) {
         
         <div className="auth-footer">
           Đã có tài khoản?{' '}
-          <span className="auth-link" onClick={onSwitchToLogin}>
+          <span className="auth-link" onClick={() => navigate('/login')}>
             Đăng nhập ngay
           </span>
         </div>

@@ -9,6 +9,12 @@ export const quizService = {
     return response.data.results || response.data;
   },
 
+  // Lấy chi tiết đề thi cụ thể
+  async getQuizDetail(quizId) {
+    const response = await api.get(`/quizzes/${quizId}/`);
+    return response.data;
+  },
+
   // Lấy danh sách câu hỏi và đáp án của một đề thi cụ thể
   async getQuizQuestions(quizId) {
     const response = await api.get(`/quizzes/${quizId}/questions/`);

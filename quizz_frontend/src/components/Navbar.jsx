@@ -1,11 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export default function Navbar({ user, onLogout, onGoHome, darkMode, onToggleTheme, onGoProfile }) {
+export default function Navbar({ user, onLogout, darkMode, onToggleTheme }) {
+  const navigate = useNavigate();
+
   return (
     <header className="app-header">
       <div className="header-container">
         {/* Left Branding matching image */}
-        <div className="brand" onClick={onGoHome} style={{ cursor: 'pointer' }}>
+        <div className="brand" onClick={() => navigate('/quizzes')} style={{ cursor: 'pointer' }}>
           <div className="logo-box">
             <i className="fa-solid fa-book"></i>
           </div>
@@ -30,7 +33,7 @@ export default function Navbar({ user, onLogout, onGoHome, darkMode, onToggleThe
           {user ? (
             <>
               {/* Profile Badge matching user tag in image */}
-              <div className="user-badge" onClick={onGoProfile} style={{ cursor: 'pointer' }} title="Trang cá nhân">
+              <div className="user-badge" onClick={() => navigate('/profile')} style={{ cursor: 'pointer' }} title="Trang cá nhân">
                 <i className="fa-regular fa-user"></i>
                 <span>{user.username}</span>
               </div>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export default function Login({ onLogin, onSwitchToRegister }) {
+export default function Login({ onLogin }) {
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -79,7 +81,7 @@ export default function Login({ onLogin, onSwitchToRegister }) {
         
         <div className="auth-footer">
           Chưa có tài khoản?{' '}
-          <span className="auth-link" onClick={onSwitchToRegister}>
+          <span className="auth-link" onClick={() => navigate('/register')}>
             Đăng ký ngay
           </span>
         </div>
