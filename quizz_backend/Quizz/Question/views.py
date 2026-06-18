@@ -57,6 +57,11 @@ class QuestionAnswersView(generics.ListCreateAPIView):
             return [IsTeacherOrAdmin()]
         return [IsAuthenticated()]
 
+    def get_serializer(self, *args, **kwargs):
+        if isinstance(kwargs.get('data'), list):
+            kwargs['many'] = True
+        return super().get_serializer(*args, **kwargs)
+
     def get_queryset(self):
         question_id = self.kwargs.get('question_id')
         return Answer.objects.filter(question_id=question_id)

@@ -2,6 +2,8 @@ from rest_framework import serializers
 from Quizz.models import Question, Answer
 
 class AnswerSerializer(serializers.ModelSerializer):
+    is_correct = serializers.ChoiceField(choices=[(0, 'Sai'), (1, 'Đúng')], default=0, help_text="Nhập 0 nếu đáp án Sai, 1 nếu đáp án Đúng.")
+
     class Meta:
         model = Answer
         fields = ['id', 'question', 'content', 'is_correct']

@@ -1,4 +1,5 @@
 from django.contrib import admin
+# pyrefly: ignore [missing-import]
 from .models import Quiz, Question, Answer, Result
 # Register your models here.
 admin.site.register(Quiz)
