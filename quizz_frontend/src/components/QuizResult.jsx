@@ -19,8 +19,8 @@ export default function QuizResult() {
         const resultData = await quizService.getResultDetail(resultId);
         setResult(resultData);
         
-        // Fetch questions for this quiz
-        const questionsData = await quizService.getQuizQuestions(resultData.quiz);
+        // Dùng danh sách câu hỏi đã được trả về trong quiz_detail của kết quả
+        const questionsData = resultData.quiz_detail?.questions || [];
         setQuestions(questionsData.sort((a, b) => (a.order || 0) - (b.order || 0)));
         
         // Map user answers
