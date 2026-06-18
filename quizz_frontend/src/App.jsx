@@ -10,6 +10,7 @@ import QuizResult from './components/QuizResult';
 import Profile from './components/Profile';
 import QuizLeaderboard from './components/QuizLeaderboard';
 import QuizAnalytics from './components/QuizAnalytics';
+import AdminDashboard from './components/AdminDashboard';
 
 function App() {
   const { user, loading, login, register, logout } = useAuth();
@@ -45,6 +46,17 @@ function App() {
     return children;
   };
 
+  // Component bảo vệ các Route yêu cầu quyền Giáo viên / Admin
+  const AdminRoute = ({ children }) => {
+    if (!user) {
+      return <Navigate to="/login" replace />;
+    }
+    if (user.role !== 'teacher' && user.role !== 'admin') {
+      return <Navigate to="/quizzes" replace />;
+    }
+    return children;
+  };
+
   // Component bảo vệ các Route không cho truy cập khi đã Đăng nhập
   const PublicRoute = ({ children }) => {
     if (user) {
@@ -52,6 +64,7 @@ function App() {
     }
     return children;
   };
+
 
   return (
     <BrowserRouter>
@@ -86,6 +99,12 @@ function App() {
               <ProtectedRoute>
                 <QuizList />
               </ProtectedRoute>
+            } />
+
+            <Route path="/admin" element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
             } />
             
             <Route path="/quizzes/:quizId/exam" element={

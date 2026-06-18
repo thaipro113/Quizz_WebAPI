@@ -12,9 +12,21 @@ export default function QuizExam() {
   const [error, setError] = useState('');
   
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState(() => {
+    try {
+      const savedAnswers = localStorage.getItem(`quiz_${quizId}_answers`);
+      return savedAnswers ? JSON.parse(savedAnswers) : {};
+    } catch (e) {
+      return {};
+    }
+  });
   const [timeLeft, setTimeLeft] = useState(0);
   const [initialTimeLimit, setInitialTimeLimit] = useState(0);
+
+  const answersRef = React.useRef(answers);
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
 
   useEffect(() => {
     const fetchQuizAndQuestions = async () => {
@@ -31,7 +43,17 @@ export default function QuizExam() {
         setError('');
         
         const limitInSeconds = (quizData.time_limit || 30) * 60;
-        setTimeLeft(limitInSeconds);
+        
+        let endTime = localStorage.getItem(`quiz_${quizId}_end_time`);
+        if (!endTime) {
+          endTime = Date.now() + limitInSeconds * 1000;
+          localStorage.setItem(`quiz_${quizId}_end_time`, endTime.toString());
+        } else {
+          endTime = parseInt(endTime, 10);
+        }
+
+        const calculatedTimeLeft = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+        setTimeLeft(calculatedTimeLeft);
         setInitialTimeLimit(limitInSeconds);
       } catch (err) {
         console.error(err);
@@ -60,13 +82,15 @@ export default function QuizExam() {
 
   const autoSubmit = async () => {
     alert('Hết giờ làm bài! Hệ thống đang tự động nộp bài của bạn.');
-    const formattedAnswers = Object.entries(answers).map(([qId, ansId]) => ({
+    const formattedAnswers = Object.entries(answersRef.current).map(([qId, ansId]) => ({
       question_id: parseInt(qId),
       selected_answer_id: ansId,
     }));
     
     try {
       const result = await quizService.submitQuiz(quizId, formattedAnswers, initialTimeLimit);
+      localStorage.removeItem(`quiz_${quizId}_end_time`);
+      localStorage.removeItem(`quiz_${quizId}_answers`);
       navigate(`/results/${result.id}`);
     } catch (err) {
       console.error(err);
@@ -97,6 +121,8 @@ export default function QuizExam() {
     try {
       setLoading(true);
       const result = await quizService.submitQuiz(quizId, formattedAnswers, completedTime);
+      localStorage.removeItem(`quiz_${quizId}_end_time`);
+      localStorage.removeItem(`quiz_${quizId}_answers`);
       navigate(`/results/${result.id}`);
     } catch (err) {
       console.error(err);
@@ -106,10 +132,12 @@ export default function QuizExam() {
   };
 
   const handleSelectAnswer = (questionId, answerId) => {
-    setAnswers((prev) => ({
-      ...prev,
+    const updatedAnswers = {
+      ...answers,
       [questionId]: answerId,
-    }));
+    };
+    setAnswers(updatedAnswers);
+    localStorage.setItem(`quiz_${quizId}_answers`, JSON.stringify(updatedAnswers));
   };
 
   const formatTime = (seconds) => {

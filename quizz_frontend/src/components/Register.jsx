@@ -12,16 +12,71 @@ export default function Register({ onRegister }) {
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const formatValidationError = (errorObj) => {
+    if (!errorObj) return 'Đăng ký thất bại. Vui lòng kiểm tra lại.';
+    if (typeof errorObj === 'string') return errorObj;
+    if (typeof errorObj === 'object') {
+      if (errorObj.detail) return errorObj.detail;
+      const keys = Object.keys(errorObj);
+      if (keys.length > 0) {
+        const firstKey = keys[0];
+        let fieldName = firstKey;
+        if (firstKey === 'username') fieldName = 'Tên tài khoản';
+        else if (firstKey === 'email') fieldName = 'Email';
+        else if (firstKey === 'password') fieldName = 'Mật khẩu';
+        
+        const errors = errorObj[firstKey];
+        let errorMsg = Array.isArray(errors) ? errors[0] : errors;
+        
+        if (typeof errorMsg === 'string') {
+          if (errorMsg.includes('Enter a valid email address') || errorMsg.includes('email không hợp lệ')) {
+            errorMsg = 'Địa chỉ email không đúng định dạng.';
+          } else if (errorMsg.includes('This field may not be blank')) {
+            errorMsg = 'Trường này không được để trống.';
+          }
+        }
+        return `${fieldName}: ${errorMsg}`;
+      }
+    }
+    return 'Đăng ký thất bại. Vui lòng kiểm tra lại.';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!username || !email || !password || !confirmPassword) {
       setError('Vui lòng điền đầy đủ các trường thông tin bắt buộc.');
       return;
     }
+    
+    // Kiểm tra tên đăng nhập (độ dài và định dạng)
+    if (username.length < 3) {
+      setError('Tên đăng nhập phải chứa ít nhất 3 ký tự.');
+      return;
+    }
+    const usernameRegex = /^[a-zA-Z0-9_@.+-]+$/;
+    if (!usernameRegex.test(username)) {
+      setError('Tên đăng nhập không hợp lệ. Chỉ chấp nhận chữ cái, số và các ký tự: _, @, ., +, -');
+      return;
+    }
+
+    // Kiểm tra định dạng email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Địa chỉ email không đúng định dạng.');
+      return;
+    }
+
+    // Kiểm tra độ dài mật khẩu
+    if (password.length < 6) {
+      setError('Mật khẩu phải chứa ít nhất 6 ký tự.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Mật khẩu xác nhận không khớp. Vui lòng nhập lại.');
       return;
     }
+    
     setError('');
     setSuccess('');
     setSubmitting(true);
@@ -34,15 +89,7 @@ export default function Register({ onRegister }) {
     } catch (err) {
       let errMsg = 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.';
       if (err.response && err.response.data) {
-        const data = err.response.data;
-        if (typeof data === 'object') {
-          const keys = Object.keys(data);
-          if (keys.length > 0) {
-            errMsg = `${keys[0]}: ${data[keys[0]]}`;
-          }
-        } else {
-          errMsg = data;
-        }
+        errMsg = formatValidationError(err.response.data);
       }
       setError(errMsg);
     } finally {
@@ -131,20 +178,6 @@ export default function Register({ onRegister }) {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="role">
-              <i className="fa-solid fa-users"></i> Vai trò
-            </label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              disabled={submitting}
-            >
-              <option value="student">Học sinh (Làm bài thi)</option>
-              <option value="teacher">Giáo viên (Quản lý đề thi)</option>
-            </select>
-          </div>
           
           <button type="submit" className="btn-primary" disabled={submitting}>
             <i className="fa-solid fa-user-plus"></i>

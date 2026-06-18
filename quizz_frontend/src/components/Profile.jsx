@@ -82,7 +82,7 @@ export default function Profile() {
               <label><i className="fa-solid fa-id-card"></i> Vai trò tài khoản</label>
               <div style={{ marginTop: '4px' }}>
                 <span className="badge-status success" style={{ textTransform: 'capitalize' }}>
-                  {profile.role === 'teacher' ? 'Giáo viên (Quản trị)' : 'Học sinh (Làm bài)'}
+                  {profile.role === 'teacher' ? 'Giáo viên' : profile.role === 'admin' ? 'Quản trị viên' : 'Người dùng'}
                 </span>
               </div>
             </div>

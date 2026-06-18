@@ -14,12 +14,21 @@ from Quizz.schemas import (
 @method_decorator(name='get', decorator=quiz_list_schema)
 @method_decorator(name='post', decorator=quiz_create_schema)
 class QuizListCreateView(generics.ListCreateAPIView):
-    queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['title', 'description']
     ordering_fields = ['created_at', 'title']
     ordering = ['-created_at']
+
+    def get_queryset(self):
+        queryset = Quiz.objects.all()
+        title = self.request.query_params.get('title')
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+        description = self.request.query_params.get('description')
+        if description:
+            queryset = queryset.filter(description__icontains=description)
+        return queryset
 
     def get_permissions(self):
         if self.request.method == 'POST':
