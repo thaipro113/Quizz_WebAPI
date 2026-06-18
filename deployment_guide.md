@@ -1,69 +1,147 @@
-# Hướng Dẫn Deploy Lên Render (Backend) và Vercel (Frontend)
+# Hướng Dẫn Triển Khai (Deploy) & Khắc Phục Sự Cố (Troubleshooting)
+# Dự án: Quizz Web Application (Django Backend & Vite React Frontend)
 
-Tài liệu này hướng dẫn chi tiết từng bước để triển khai dự án Quizz lên môi trường production:
-1. **Render**: Dùng để host database PostgreSQL và Django Rest Framework Backend API.
-2. **Vercel**: Dùng để host Vite React Frontend App (nhanh, bảo mật và miễn phí).
+Tài liệu này tổng hợp toàn bộ các bước triển khai dự án lên **Render** (cho Database & Backend) và **Vercel** (cho Frontend), kèm theo danh sách các lỗi thường gặp và cách khắc phục chi tiết.
 
 ---
 
-## PHẦN 1: DEPLOY BACKEND LÊN RENDER
+## PHẦN 1: QUY TRÌNH TRIỂN KHAI TIÊU CHUẨN
 
-### Bước 1: Tạo Database PostgreSQL trên Render
+### 1. Triển khai Database PostgreSQL trên Render
 1. Đăng nhập vào [Render.com](https://render.com/).
-2. Nhấp chọn **New +** -> **PostgreSQL**.
-3. Điền các thông tin:
-   * **Name**: `quizz-database` (hoặc tên tùy ý).
+2. Chọn **New +** -> **PostgreSQL**.
+3. Cấu hình thông số:
+   * **Name**: `quizz-database`
    * **Database**: `quizz`
-   * **User**: `postgres` (hoặc render tự tạo).
-   * **Region**: Chọn khu vực gần Việt Nam nhất (ví dụ: `Singapore` hoặc `Oregon`).
-4. Cuộn xuống và nhấp chọn **Create Database** (chọn gói Free).
-5. Khi database chuyển sang trạng thái **Active**, hãy sao chép **Internal Database URL** hoặc **External Database URL** (dạng `postgres://...`) để chuẩn bị điền vào môi trường của Web Service.
+   * **User**: `postgres`
+   * **Region**: Chọn khu vực gần Việt Nam (ví dụ: `Singapore` hoặc `Oregon`).
+4. Nhấp **Create Database** (Gói Free).
+5. Sau khi database ở trạng thái **Active**:
+   * Sao chép **Internal Database URL** (dành cho Web Service Render kết nối nội bộ nhanh nhất).
+   * Sao chép **External Database URL** (nếu bạn muốn kết nối từ tool ngoài hoặc từ localhost).
 
-### Bước 2: Tạo Web Service (Django Backend)
-1. Trên Render Dashboard, chọn **New +** -> **Web Service**.
-2. Chọn **Build and deploy from a Git repository**.
-3. Kết nối với tài khoản GitHub của bạn và chọn repo **Quizz_WebAPI**.
-4. Cấu hình dịch vụ Web Service:
-   * **Name**: `quizz-backend` (hoặc tên tùy chọn).
-   * **Region**: Nên chọn cùng vùng với database (ví dụ: `Singapore`).
-   * **Branch**: `develop` (hoặc `main` / `master` tùy theo nhánh bạn muốn deploy).
-   * **Root Directory**: `quizz_backend` *(Quan trọng: phải chỉ rõ thư mục backend)*.
+### 2. Triển khai Django Backend trên Render
+1. Chọn **New +** -> **Web Service** -> Chọn **Build and deploy from a Git repository**.
+2. Chọn repo **Quizz_WebAPI** từ tài khoản GitHub của bạn.
+3. Thiết lập thông tin cơ bản:
+   * **Name**: `quizz-backend`
+   * **Branch**: Nhánh chính của bạn (ví dụ: `main` hoặc `develop`).
+   * **Root Directory**: Để trống (Mặc định là thư mục gốc của repo).
    * **Language**: `Python`
-   * **Build Command**: 
+4. Cấu hình lệnh chạy (Dành cho việc chạy từ thư mục gốc):
+   * **Build Command**:
      ```bash
-     pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+     pip install -r requirements.txt && python quizz_backend/manage.py collectstatic --noinput && python quizz_backend/manage.py migrate
      ```
-   * **Start Command**: 
+   * **Start Command**:
      ```bash
-     gunicorn quizz_backend.wsgi:application
+     gunicorn --chdir quizz_backend quizz_backend.wsgi:application
      ```
-5. Nhấp chọn **Advanced** để thiết lập **Environment Variables (Biến môi trường)**:
-   * Thêm các cặp key-value sau:
-     * `DATABASE_URL`: *(Dán URL PostgreSQL của Render bạn đã copy ở Bước 1 vào đây)*
-     * `SECRET_KEY`: *(Mã bảo mật của bạn, có thể tự nhập một chuỗi ngẫu nhiên)*
-     * `DEBUG`: `False`
-     * `ALLOWED_HOSTS`: `localhost,127.0.0.1,.onrender.com`
-6. Nhấp chọn **Create Web Service**. Đợi Render build và start ứng dụng thành công.
-7. Sau khi thành công, hãy copy địa chỉ URL của Backend API (ví dụ: `https://quizz-backend.onrender.com`).
+5. Nhấp chọn **Advanced** và thêm các biến môi trường (**Environment Variables**):
+   * `DATABASE_URL`: *(Dán URL PostgreSQL của Render bạn đã copy vào đây)*
+   * `SECRET_KEY`: *(Nhập một chuỗi ký tự ngẫu nhiên bất kỳ)*
+   * `DEBUG`: `False`
+   * `ALLOWED_HOSTS`: `*` *(Hoặc tên miền Render backend của bạn, ví dụ: `.onrender.com`)*
+6. Nhấp **Create Web Service**.
+
+### 3. Triển khai Vite React Frontend trên Vercel
+1. Truy cập [Vercel.com](https://vercel.com/) và đăng nhập qua GitHub.
+2. Chọn **Add New...** -> **Project** -> Chọn repo **Quizz_WebAPI**.
+3. Cấu hình Project:
+   * **Framework Preset**: `Vite` (Vercel tự động nhận diện).
+   * **Root Directory**: Nhấp **Edit** và chọn thư mục `quizz_frontend` *(Bắt buộc để tránh chạy nhầm ở thư mục gốc)*.
+   * **Environment Variables**:
+     * **Key**: `VITE_API_URL`
+     * **Value**: Dán URL Render backend của bạn kèm theo `/api` ở cuối (ví dụ: `https://quizz-webapi.onrender.com/api`).
+4. Nhấp **Deploy**.
 
 ---
 
-## PHẦN 2: DEPLOY FRONTEND LÊN VERCEL
+## PHẦN 2: HƯỚNG DẪN KHẮC PHỤC CÁC LỖI THƯỜNG GẶP (TROUBLESHOOTING)
 
-### Bước 1: Chuẩn bị trước khi deploy
-Đảm bảo rằng code frontend đã sử dụng URL backend động bằng cách đọc từ biến môi trường `VITE_API_URL` (Tôi đã cấu hình sẵn phần này cho bạn trong code).
+### LỖI BÊN FRONTEND (VERCEL)
 
-### Bước 2: Deploy lên Vercel
-1. Truy cập [Vercel.com](https://vercel.com/) và đăng nhập bằng tài khoản GitHub.
-2. Nhấp chọn **Add New...** -> **Project**.
-3. Chọn repo **Quizz_WebAPI** của bạn và nhấp **Import**.
-4. Cấu hình Project Vercel:
-   * **Project Name**: `quizz-frontend` (hoặc tên tùy chọn).
-   * **Framework Preset**: `Vite` (Vercel tự động nhận diện).
-   * **Root Directory**: Nhấp **Edit** và chọn thư mục `quizz_frontend`.
-   * **Build and Output Settings**: Giữ mặc định.
-   * **Environment Variables**: Thêm biến môi trường để kết nối với backend Render:
-     * **Key**: `VITE_API_URL`
-     * **Value**: Dán URL của Render Backend của bạn vào đây (Lưu ý: nhớ thêm `/api` ở cuối, ví dụ: `https://quizz-backend.onrender.com/api`).
-5. Nhấp chọn **Deploy**.
-6. Quá trình deploy sẽ hoàn tất sau khoảng 1 phút. Vercel sẽ cấp cho bạn một địa chỉ URL công khai dạng `https://quizz-frontend.vercel.app` để truy cập ứng dụng của mình!
+#### 1. Lỗi: `vite: command not found` hoặc `Error: Command "vite build" exited with 127`
+* **Triệu chứng**: Quá trình build trên Vercel thất bại ngay sau khi chạy lệnh build.
+* **Nguyên nhân**: Vercel đang chạy cài đặt dependencies ở thư mục gốc của repo thay vì thư mục `quizz_frontend`. Thư mục gốc không chứa gói `vite`.
+* **Cách khắc phục**:
+  1. Vào Vercel Dashboard -> chọn dự án của bạn -> **Settings** -> **General**.
+  2. Tìm mục **Root Directory**, nhấn **Edit** và đổi thành: `quizz_frontend`.
+  3. Bấm **Save**.
+  4. Vào tab **Deployments** -> Bấm nút **ba chấm `...`** ở bản deploy lỗi -> Chọn **Redeploy**.
+
+#### 2. Lỗi: Đăng ký/Đăng nhập báo lỗi trả về chuỗi HTML `Not Found` (404)
+* **Triệu chứng**: Giao diện đăng ký hiện khung màu đỏ chứa mã HTML `<!doctype html> <html lang="en"> <head> <title>Not Found</title>...`.
+* **Nguyên nhân**: Frontend gửi yêu cầu API sai đường dẫn (thiếu tiền tố `/api/` hoặc trỏ nhầm sang chính tên miền Vercel).
+* **Cách khắc phục**:
+  1. Mở trang Vercel -> **Settings** -> **Environment Variables**.
+  2. Kiểm tra lại giá trị biến `VITE_API_URL`. Nó phải chứa đầy đủ phần `/api` ở cuối (ví dụ: `https://quizz-webapi.onrender.com/api`).
+  3. Bấm **Save**.
+  4. **Quan trọng**: Sau khi sửa biến môi trường, bắt buộc phải vào tab **Deployments** -> Chọn bản build mới nhất -> Bấm nút **ba chấm `...`** -> Chọn **Redeploy** để Vite biên dịch lại mã nguồn với biến mới.
+
+---
+
+### LỖI BÊN BACKEND (RENDER)
+
+#### 3. Lỗi: `python: can't open file '/opt/render/project/src/manage.py': [Errno 2] No such file or directory`
+* **Triệu chứng**: Render báo build thất bại ngay bước đầu.
+* **Nguyên nhân**: Do file `manage.py` nằm trong thư mục con `quizz_backend` nhưng lệnh chạy của bạn lại tìm ở thư mục gốc ngoài cùng.
+* **Cách khắc phục**:
+  * Vào Render Dashboard -> chọn dịch vụ backend -> **Settings**.
+  * Cập nhật **Build Command** thành:
+    ```bash
+    pip install -r requirements.txt && python quizz_backend/manage.py collectstatic --noinput && python quizz_backend/manage.py migrate
+    ```
+
+#### 4. Lỗi: `ModuleNotFoundError: No module named 'quizz_backend.wsgi'`
+* **Triệu chứng**: Quá trình build thành công nhưng Web Service bị tắt ngay lập tức và chuyển sang trạng thái crash/restart liên tục.
+* **Nguyên nhân**: Lệnh khởi chạy `gunicorn` tìm kiếm file `wsgi.py` sai thư mục làm việc.
+* **Cách khắc phục**:
+  * Vào Render -> chọn Web Service -> **Settings**.
+  * Cập nhật lại **Start Command** thành:
+    ```bash
+    gunicorn --chdir quizz_backend quizz_backend.wsgi:application
+    ```
+    *(Cờ `--chdir quizz_backend` giúp gunicorn trỏ đúng vào thư mục của ứng dụng trước khi khởi chạy)*.
+
+#### 5. Lỗi: `ImproperlyConfigured: The SECRET_KEY setting must not be empty.`
+* **Triệu chứng**: Django báo lỗi thiếu Secret Key khi build hoặc deploy.
+* **Nguyên nhân**: Chưa thiết lập biến môi trường `SECRET_KEY` trên Render.
+* **Cách khắc phục**:
+  * Vào Render -> Web Service -> **Environment Variables**.
+  * Thêm biến `SECRET_KEY` với một giá trị bất kỳ (ví dụ: `django-insecure-prod-key-12345`).
+
+#### 6. Lỗi: Báo lỗi vượt quá giới hạn dịch vụ gói Free của Render
+* **Triệu chứng**: Không thể tạo mới Web Service hoặc Database, Render bắt buộc nhập thẻ thanh toán hoặc báo lỗi Limit.
+* **Nguyên nhân**: Gói Free của Render chỉ cho phép chạy đồng thời tối đa **1 Web Service** và **1 Database**.
+* **Cách khắc phục**:
+  * Truy cập vào trang chủ Render Dashboard.
+  * Tìm các dịch vụ cũ không còn dùng nữa, bấm chọn và chọn **Settings** -> cuộn xuống dưới cùng bấm **Delete Web Service** hoặc **Suspend** (Tạm dừng) để giải phóng slot.
+
+---
+
+## PHẦN 3: CÁC THAO TÁC QUẢN TRỊ SAU KHI DEPLOY THÀNH CÔNG
+
+### Tạo tài khoản Admin (Superuser) trên Cloud
+Để có thể đăng nhập vào trang quản trị quản lý đề thi và người dùng, bạn cần tạo tài khoản Admin theo các cách sau:
+
+#### Cách 1: Sử dụng Shell trực tuyến của Render (Khuyên dùng)
+1. Truy cập trang web Render, chọn Web Service `quizz-backend` của bạn.
+2. Chọn mục **Shell** ở menu bên trái.
+3. Nhập lệnh sau và bấm Enter:
+   ```bash
+   python manage.py createsuperuser
+   ```
+4. Nhập các thông tin Username, Email và Password theo yêu cầu của hệ thống (khi nhập mật khẩu hệ thống sẽ ẩn ký tự, bạn cứ gõ bình thường rồi nhấn Enter).
+
+#### Cách 2: Kết nối database online từ máy cá nhân
+1. Vào mục quản trị Database trên Render, sao chép địa chỉ **External Database URL**.
+2. Tạm thời mở file `.env` local trên máy tính của bạn và dán dòng sau:
+   ```env
+   DATABASE_URL=postgres://... (URL database online vừa copy)
+   ```
+3. Mở Terminal trên máy tính tại thư mục `quizz_backend/` và chạy lệnh:
+   ```bash
+   python manage.py createsuperuser
+   ```
+4. Khi chạy xong, tài khoản admin đã được tạo trên database online. Hãy xóa hoặc comment lại dòng `DATABASE_URL` trong file `.env` local của bạn để tránh ảnh hưởng đến việc lập trình cục bộ.
