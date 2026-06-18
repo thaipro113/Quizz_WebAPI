@@ -13,3 +13,22 @@ ENV/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Python pycache & compiled files
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local databases
+*.sqlite3
+db.sqlite3
+
+# Frontend dependencies and builds
+node_modules/
+dist/
+quizz_frontend/dist/
+quizz_frontend/node_modules/
