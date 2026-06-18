@@ -22,32 +22,20 @@ export function useAuth() {
   }, []);
 
   const login = async (username, password) => {
-    setLoading(true);
-    try {
-      const userInfo = await authService.login(username, password);
-      setUser(userInfo);
-      return userInfo;
-    } finally {
-      setLoading(false);
-    }
+    const userInfo = await authService.login(username, password);
+    setUser(userInfo);
+    return userInfo;
   };
 
   const register = async (username, email, password, role) => {
-    setLoading(true);
-    try {
-      return await authService.register(username, email, password, role);
-    } finally {
-      setLoading(false);
-    }
+    return await authService.register(username, email, password, role);
   };
 
   const logout = async () => {
-    setLoading(true);
     try {
       await authService.logout();
-      setUser(null);
     } finally {
-      setLoading(false);
+      setUser(null);
     }
   };
 

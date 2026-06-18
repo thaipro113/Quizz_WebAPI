@@ -40,6 +40,45 @@ export default function AdminDashboard() {
   const [editingAnswer, setEditingAnswer] = useState(null); // null if creating, else answer object
   const [answerForm, setAnswerForm] = useState({ content: '', is_correct: false });
 
+  // 4. User Modal
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null); // null if creating, else user object
+  const [userForm, setUserForm] = useState({ username: '', email: '', password: '', role: 'student', is_active: true });
+
+  const [modalError, setModalError] = useState('');
+
+  const formatValidationError = (errorObj) => {
+    if (!errorObj) return 'Thao tác thất bại. Vui lòng kiểm tra lại.';
+    if (typeof errorObj === 'string') return errorObj;
+    if (typeof errorObj === 'object') {
+      if (errorObj.detail) return errorObj.detail;
+      const keys = Object.keys(errorObj);
+      if (keys.length > 0) {
+        const firstKey = keys[0];
+        let fieldName = firstKey;
+        if (firstKey === 'username') fieldName = 'Tên tài khoản';
+        else if (firstKey === 'email') fieldName = 'Email';
+        else if (firstKey === 'password') fieldName = 'Mật khẩu';
+        else if (firstKey === 'title') fieldName = 'Tiêu đề';
+        else if (firstKey === 'content') fieldName = 'Nội dung';
+        else if (firstKey === 'time_limit') fieldName = 'Thời gian làm bài';
+        
+        const errors = errorObj[firstKey];
+        let errorMsg = Array.isArray(errors) ? errors[0] : errors;
+        
+        if (typeof errorMsg === 'string') {
+          if (errorMsg.includes('Enter a valid email address') || errorMsg.includes('email không hợp lệ')) {
+            errorMsg = 'Địa chỉ email không đúng định dạng.';
+          } else if (errorMsg.includes('This field may not be blank')) {
+            errorMsg = 'Trường này không được để trống.';
+          }
+        }
+        return `${fieldName}: ${errorMsg}`;
+      }
+    }
+    return 'Thao tác thất bại. Vui lòng kiểm tra lại.';
+  };
+
   const fetchQuizzes = async (query = '') => {
     setLoading(true);
     try {
@@ -114,6 +153,7 @@ export default function AdminDashboard() {
 
   // --- CRUD QUIZ ACTIONS ---
   const openQuizModal = (quiz = null) => {
+    setModalError('');
     if (quiz) {
       setEditingQuiz(quiz);
       setQuizForm({
@@ -131,7 +171,7 @@ export default function AdminDashboard() {
   const handleQuizSubmit = async (e) => {
     e.preventDefault();
     if (!quizForm.title) {
-      alert('Vui lòng nhập tên đề thi.');
+      setModalError('Vui lòng nhập tên đề thi.');
       return;
     }
     try {
@@ -153,7 +193,7 @@ export default function AdminDashboard() {
       fetchQuizzes(searchQuery);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.detail || 'Thao tác đề thi thất bại. Vui lòng thử lại.');
+      setModalError(formatValidationError(err.response?.data));
     }
   };
 
@@ -173,6 +213,7 @@ export default function AdminDashboard() {
 
   // --- CRUD QUESTION ACTIONS ---
   const openQuestionModal = (question = null) => {
+    setModalError('');
     if (question) {
       setEditingQuestion(question);
       setQuestionForm({
@@ -192,7 +233,7 @@ export default function AdminDashboard() {
   const handleQuestionSubmit = async (e) => {
     e.preventDefault();
     if (!questionForm.content) {
-      alert('Vui lòng nhập nội dung câu hỏi.');
+      setModalError('Vui lòng nhập nội dung câu hỏi.');
       return;
     }
     try {
@@ -212,7 +253,7 @@ export default function AdminDashboard() {
       fetchQuestionsForQuiz(selectedQuizForQuestions.id);
     } catch (err) {
       console.error(err);
-      alert('Lưu câu hỏi thất bại. Vui lòng thử lại.');
+      setModalError(formatValidationError(err.response?.data));
     }
   };
 
@@ -232,6 +273,7 @@ export default function AdminDashboard() {
 
   // --- CRUD ANSWER ACTIONS ---
   const openAnswerModal = (question, answer = null) => {
+    setModalError('');
     setActiveQuestionForAnswer(question);
     if (answer) {
       setEditingAnswer(answer);
@@ -249,7 +291,7 @@ export default function AdminDashboard() {
   const handleAnswerSubmit = async (e) => {
     e.preventDefault();
     if (!answerForm.content) {
-      alert('Vui lòng nhập nội dung đáp án.');
+      setModalError('Vui lòng nhập nội dung đáp án.');
       return;
     }
     try {
@@ -269,7 +311,7 @@ export default function AdminDashboard() {
       fetchQuestionsForQuiz(selectedQuizForQuestions.id);
     } catch (err) {
       console.error(err);
-      alert('Lưu đáp án thất bại.');
+      setModalError(formatValidationError(err.response?.data));
     }
   };
 
@@ -284,6 +326,102 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error(err);
       alert('Xóa đáp án thất bại.');
+    }
+  };
+
+  // --- CRUD USER ACTIONS ---
+  const openUserModal = (user = null) => {
+    setModalError('');
+    if (user) {
+      setEditingUser(user);
+      setUserForm({
+        username: user.username || '',
+        email: user.email || '',
+        password: '',
+        role: user.role || 'student',
+        is_active: user.is_active !== false
+      });
+    } else {
+      setEditingUser(null);
+      setUserForm({ username: '', email: '', password: '', role: 'student', is_active: true });
+    }
+    setShowUserModal(true);
+  };
+
+  const handleUserSubmit = async (e) => {
+    e.preventDefault();
+    if (!userForm.username || !userForm.email) {
+      setModalError('Vui lòng nhập tên tài khoản và email.');
+      return;
+    }
+
+    // Kiểm tra định dạng tên đăng nhập
+    if (userForm.username.length < 3) {
+      setModalError('Tên đăng nhập phải chứa ít nhất 3 ký tự.');
+      return;
+    }
+    const usernameRegex = /^[a-zA-Z0-9_@.+-]+$/;
+    if (!usernameRegex.test(userForm.username)) {
+      setModalError('Tên đăng nhập không hợp lệ. Chỉ chấp nhận chữ cái, số và các ký tự: _, @, ., +, -');
+      return;
+    }
+
+    // Kiểm tra định dạng email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userForm.email)) {
+      setModalError('Địa chỉ email không đúng định dạng.');
+      return;
+    }
+
+    // Kiểm tra độ dài mật khẩu khi tạo mới hoặc khi nhập mật khẩu mới để đổi
+    if (!editingUser || userForm.password) {
+      if (userForm.password.length < 6) {
+        setModalError('Mật khẩu phải chứa ít nhất 6 ký tự.');
+        return;
+      }
+    }
+
+    try {
+      const payload = {
+        username: userForm.username,
+        email: userForm.email,
+        role: userForm.role,
+        is_active: userForm.is_active
+      };
+      if (userForm.password) {
+        payload.password = userForm.password;
+      }
+
+      if (editingUser) {
+        await authService.updateUser(editingUser.id, payload);
+        alert('Cập nhật người dùng thành công!');
+      } else {
+        await authService.createUser(payload);
+        alert('Thêm người dùng mới thành công!');
+      }
+      setShowUserModal(false);
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      setModalError(formatValidationError(err.response?.data));
+    }
+  };
+
+  const handleDeleteUser = async (userId, username) => {
+    if (currentUser && currentUser.id === userId) {
+      alert('Bạn không thể tự xóa tài khoản của chính mình.');
+      return;
+    }
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa tài khoản "${username}"?`)) {
+      return;
+    }
+    try {
+      await authService.deleteUser(userId);
+      alert('Xóa tài khoản thành công!');
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      alert('Xóa tài khoản thất bại. Chỉ có Quản trị viên mới có quyền xóa tài khoản.');
     }
   };
 
@@ -645,7 +783,7 @@ export default function AdminDashboard() {
         <>
           {/* User Search Bar */}
           <form onSubmit={(e) => e.preventDefault()} className="search-bar-form" style={{ marginTop: '16px' }}>
-            <div className="search-input-group" style={{ gridTemplateColumns: '1fr auto', alignItems: 'end' }}>
+            <div className="search-input-group" style={{ gridTemplateColumns: currentUser?.role === 'admin' ? '1fr auto auto' : '1fr auto', alignItems: 'end' }}>
               <div className="search-field">
                 <label htmlFor="search-user">Tìm kiếm người dùng</label>
                 <input
@@ -665,6 +803,16 @@ export default function AdminDashboard() {
               >
                 <i className="fa-solid fa-rotate-left"></i> Làm mới
               </button>
+              {currentUser?.role === 'admin' && (
+                <button 
+                  type="button" 
+                  onClick={() => openUserModal()} 
+                  className="btn-header-primary" 
+                  style={{ height: '38px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <i className="fa-solid fa-user-plus"></i> Thêm Người Dùng
+                </button>
+              )}
             </div>
           </form>
 
@@ -685,6 +833,7 @@ export default function AdminDashboard() {
                       <th>VAI TRÒ</th>
                       <th>NGÀY TẠO TÀI KHOẢN</th>
                       <th>TRẠNG THÁI</th>
+                      {currentUser?.role === 'admin' && <th>THAO TÁC</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -709,6 +858,28 @@ export default function AdminDashboard() {
                             </span>
                           )}
                         </td>
+                        {currentUser?.role === 'admin' && (
+                          <td>
+                            <div className="table-actions">
+                              <button
+                                onClick={() => openUserModal(u)}
+                                className="btn-action"
+                                title="Sửa thông tin người dùng"
+                                style={{ color: 'var(--primary)', borderColor: 'var(--primary)' }}
+                              >
+                                <i className="fa-solid fa-pen-to-square"></i>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUser(u.id, u.username)}
+                                className="btn-action"
+                                title="Xóa người dùng"
+                                style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
+                              >
+                                <i className="fa-solid fa-trash-can"></i>
+                              </button>
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -734,6 +905,11 @@ export default function AdminDashboard() {
               </button>
             </div>
             <form onSubmit={handleQuizSubmit} className="modal-body auth-form" style={{ padding: 0 }}>
+              {modalError && (
+                <div className="alert-error" style={{ marginBottom: '16px' }}>
+                  <i className="fa-solid fa-triangle-exclamation"></i> {modalError}
+                </div>
+              )}
               <div className="form-group">
                 <label htmlFor="quiz-title-input">Tên đề thi *</label>
                 <input
@@ -800,6 +976,11 @@ export default function AdminDashboard() {
               </button>
             </div>
             <form onSubmit={handleQuestionSubmit} className="modal-body auth-form" style={{ padding: 0 }}>
+              {modalError && (
+                <div className="alert-error" style={{ marginBottom: '16px' }}>
+                  <i className="fa-solid fa-triangle-exclamation"></i> {modalError}
+                </div>
+              )}
               <div className="form-group">
                 <label htmlFor="question-content-input">Nội dung câu hỏi *</label>
                 <textarea
@@ -855,6 +1036,11 @@ export default function AdminDashboard() {
               </button>
             </div>
             <form onSubmit={handleAnswerSubmit} className="modal-body auth-form" style={{ padding: 0 }}>
+              {modalError && (
+                <div className="alert-error" style={{ marginBottom: '16px' }}>
+                  <i className="fa-solid fa-triangle-exclamation"></i> {modalError}
+                </div>
+              )}
               <div style={{ backgroundColor: 'var(--input-bg)', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                 Câu hỏi: <strong>"{activeQuestionForAnswer?.content}"</strong>
               </div>
@@ -881,6 +1067,92 @@ export default function AdminDashboard() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-reset" onClick={() => setShowAnswerModal(false)}>
+                  Hủy bỏ
+                </button>
+                <button type="submit" className="btn-primary" style={{ width: 'auto', marginTop: 0 }}>
+                  <i className="fa-solid fa-circle-check"></i> Lưu lại
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 4. USER MODAL */}
+      {showUserModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>{editingUser ? 'Chỉnh Sửa Người Dùng' : 'Thêm Người Dùng Mới'}</h3>
+              <button className="modal-close" onClick={() => setShowUserModal(false)}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <form onSubmit={handleUserSubmit} className="modal-body auth-form" style={{ padding: 0 }}>
+              {modalError && (
+                <div className="alert-error" style={{ marginBottom: '16px' }}>
+                  <i className="fa-solid fa-triangle-exclamation"></i> {modalError}
+                </div>
+              )}
+              <div className="form-group">
+                <label htmlFor="user-username-input">Tên đăng nhập *</label>
+                <input
+                  id="user-username-input"
+                  type="text"
+                  placeholder="Nhập tên tài khoản..."
+                  value={userForm.username}
+                  onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
+                  required
+                  disabled={!!editingUser}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="user-email-input">Địa chỉ Email *</label>
+                <input
+                  id="user-email-input"
+                  type="email"
+                  placeholder="Nhập email..."
+                  value={userForm.email}
+                  onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="user-password-input">Mật khẩu {editingUser ? '(Để trống nếu không đổi)' : '*'}</label>
+                <input
+                  id="user-password-input"
+                  type="password"
+                  placeholder={editingUser ? "Nhập mật khẩu mới nếu muốn đổi..." : "Nhập mật khẩu tài khoản..."}
+                  value={userForm.password}
+                  onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                  required={!editingUser}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="user-role-input">Vai trò *</label>
+                <select
+                  id="user-role-input"
+                  value={userForm.role}
+                  onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                  required
+                >
+                  <option value="student">Người dùng (Học sinh)</option>
+                  <option value="teacher">Giáo viên</option>
+                  <option value="admin">Quản trị viên</option>
+                </select>
+              </div>
+              <div className="form-group" style={{ flexDirection: 'row', gap: '8px', alignItems: 'center' }}>
+                <input
+                  id="user-isactive-input"
+                  type="checkbox"
+                  checked={userForm.is_active}
+                  onChange={(e) => setUserForm({ ...userForm, is_active: e.target.checked })}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <label htmlFor="user-isactive-input" style={{ cursor: 'pointer', userSelect: 'none' }}>Tài khoản đang hoạt động</label>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn-reset" onClick={() => setShowUserModal(false)}>
                   Hủy bỏ
                 </button>
                 <button type="submit" className="btn-primary" style={{ width: 'auto', marginTop: 0 }}>
