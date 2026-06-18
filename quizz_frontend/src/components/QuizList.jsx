@@ -6,23 +6,65 @@ import { authService } from '../services/auth';
 export default function QuizList() {
   const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState([]);
+  const [totalQuizzes, setTotalQuizzes] = useState(0);
+  const [quizPage, setQuizPage] = useState(1);
+  
   const [results, setResults] = useState([]);
+  const [totalResults, setTotalResults] = useState(0);
+  const [resultsPage, setResultsPage] = useState(1);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searchDesc, setSearchDesc] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
 
+  const PAGE_SIZE = 10;
+
+  const fetchQuizzes = async (page = 1, searchTitle = searchQuery, searchDescription = searchDesc) => {
+    try {
+      const data = await quizService.getQuizzes({
+        title: searchTitle,
+        description: searchDescription,
+        page
+      });
+      if (data && data.results) {
+        setQuizzes(data.results);
+        setTotalQuizzes(data.count || 0);
+      } else {
+        setQuizzes(Array.isArray(data) ? data : []);
+        setTotalQuizzes(Array.isArray(data) ? data.length : 0);
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Không thể tải danh sách đề thi. Vui lòng thử lại sau.');
+    }
+  };
+
+  const fetchResults = async (page = 1) => {
+    try {
+      const data = await quizService.getResults({ page });
+      if (data && data.results) {
+        setResults(data.results);
+        setTotalResults(data.count || 0);
+      } else {
+        setResults(Array.isArray(data) ? data : []);
+        setTotalResults(Array.isArray(data) ? data.length : 0);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const fetchData = async (filters = {}) => {
     setLoading(true);
     try {
-      // Gọi song song danh sách đề thi và lịch sử làm bài
-      const [quizzesData, resultsData] = await Promise.all([
-        quizService.getQuizzes(filters),
-        quizService.getResults()
+      await Promise.all([
+        fetchQuizzes(1, filters.title, filters.description),
+        fetchResults(1)
       ]);
-      setQuizzes(quizzesData);
-      setResults(resultsData);
+      setQuizPage(1);
+      setResultsPage(1);
       setError('');
     } catch (err) {
       console.error(err);
@@ -37,6 +79,20 @@ export default function QuizList() {
     setCurrentUser(user);
     fetchData({});
   }, []);
+
+  const handleQuizPageChange = async (newPage) => {
+    setLoading(true);
+    setQuizPage(newPage);
+    await fetchQuizzes(newPage);
+    setLoading(false);
+  };
+
+  const handleResultsPageChange = async (newPage) => {
+    setLoading(true);
+    setResultsPage(newPage);
+    await fetchResults(newPage);
+    setLoading(false);
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -243,6 +299,43 @@ export default function QuizList() {
             })}
           </div>
         )}
+        
+        {/* Thanh Phân Trang Đề Thi */}
+        {Math.ceil(totalQuizzes / PAGE_SIZE) > 1 && (
+          <div className="pagination-wrapper">
+            <span className="pagination-info">
+              Hiển thị {quizzes.length} / {totalQuizzes} đề thi
+            </span>
+            <button
+              type="button"
+              className="pagination-btn"
+              onClick={() => handleQuizPageChange(quizPage - 1)}
+              disabled={quizPage === 1}
+            >
+              <i className="fa-solid fa-angle-left"></i>
+            </button>
+            
+            {Array.from({ length: Math.ceil(totalQuizzes / PAGE_SIZE) }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={`pagination-btn ${quizPage === p ? 'active' : ''}`}
+                onClick={() => handleQuizPageChange(p)}
+              >
+                {p}
+              </button>
+            ))}
+            
+            <button
+              type="button"
+              className="pagination-btn"
+              onClick={() => handleQuizPageChange(quizPage + 1)}
+              disabled={quizPage === Math.ceil(totalQuizzes / PAGE_SIZE)}
+            >
+              <i className="fa-solid fa-angle-right"></i>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 5. Lịch sử làm bài thi gần đây */}
@@ -268,7 +361,7 @@ export default function QuizList() {
                 </tr>
               </thead>
               <tbody>
-                {results.slice(0, 8).map((result) => {
+                {results.map((result) => {
                   const scoreOutOf10 = result.total_questions > 0 
                     ? ((result.score / result.total_questions) * 10).toFixed(1)
                     : '0.0';
@@ -298,6 +391,43 @@ export default function QuizList() {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Thanh Phân Trang Lịch Sử Làm Bài */}
+        {Math.ceil(totalResults / PAGE_SIZE) > 1 && (
+          <div className="pagination-wrapper" style={{ marginTop: '16px' }}>
+            <span className="pagination-info">
+              Hiển thị {results.length} / {totalResults} lượt làm bài
+            </span>
+            <button
+              type="button"
+              className="pagination-btn"
+              onClick={() => handleResultsPageChange(resultsPage - 1)}
+              disabled={resultsPage === 1}
+            >
+              <i className="fa-solid fa-angle-left"></i>
+            </button>
+            
+            {Array.from({ length: Math.ceil(totalResults / PAGE_SIZE) }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={`pagination-btn ${resultsPage === p ? 'active' : ''}`}
+                onClick={() => handleResultsPageChange(p)}
+              >
+                {p}
+              </button>
+            ))}
+            
+            <button
+              type="button"
+              className="pagination-btn"
+              onClick={() => handleResultsPageChange(resultsPage + 1)}
+              disabled={resultsPage === Math.ceil(totalResults / PAGE_SIZE)}
+            >
+              <i className="fa-solid fa-angle-right"></i>
+            </button>
           </div>
         )}
       </div>

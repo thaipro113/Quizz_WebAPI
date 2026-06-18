@@ -3,19 +3,17 @@ import api from './api';
 export const quizService = {
   // Lấy danh sách toàn bộ đề thi
   async getQuizzes(filters = {}) {
-    let url = '/quizzes/';
+    const params = {};
     if (typeof filters === 'string') {
-      url = filters ? `/quizzes/?title=${filters}` : '/quizzes/';
+      if (filters) params.title = filters;
     } else if (filters && typeof filters === 'object') {
-      const params = new URLSearchParams();
-      if (filters.title) params.append('title', filters.title);
-      if (filters.description) params.append('description', filters.description);
-      const queryString = params.toString();
-      url = queryString ? `/quizzes/?${queryString}` : '/quizzes/';
+      if (filters.title) params.title = filters.title;
+      if (filters.description) params.description = filters.description;
+      if (filters.page) params.page = filters.page;
+      if (filters.page_size) params.page_size = filters.page_size;
     }
-    const response = await api.get(url);
-    // DRF trả về kết quả phân trang ở trường `results` hoặc mảng trực tiếp tùy theo phân trang
-    return response.data.results || response.data;
+    const response = await api.get('/quizzes/', { params });
+    return response.data;
   },
 
   // Lấy chi tiết đề thi cụ thể
@@ -58,9 +56,9 @@ export const quizService = {
   },
 
   // Lấy lịch sử làm bài của người dùng hiện tại
-  async getResults() {
-    const response = await api.get('/results/');
-    return response.data.results || response.data;
+  async getResults(params = {}) {
+    const response = await api.get('/results/', { params });
+    return response.data;
   },
 
   // === CÁC API CRUD CHO GIÁO VIÊN / ADMIN ===

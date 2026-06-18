@@ -18,6 +18,13 @@ export default function AdminDashboard() {
   const [searchDesc, setSearchDesc] = useState('');
   const [userSearchQuery, setUserSearchQuery] = useState('');
 
+  // Pagination states
+  const [totalQuizzes, setTotalQuizzes] = useState(0);
+  const [quizzesPage, setQuizzesPage] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [usersPage, setUsersPage] = useState(1);
+  const PAGE_SIZE = 10;
+
   // Active Quiz for Question/Answer management
   const [selectedQuizForQuestions, setSelectedQuizForQuestions] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -79,11 +86,21 @@ export default function AdminDashboard() {
     return 'Thao tác thất bại. Vui lòng kiểm tra lại.';
   };
 
-  const fetchQuizzes = async (query = '') => {
+  const fetchQuizzes = async (page = 1, query = searchQuery) => {
     setLoading(true);
     try {
-      const data = await quizService.getQuizzes(query);
-      setQuizzes(data);
+      const data = await quizService.getQuizzes({
+        title: query,
+        page
+      });
+      if (data && data.results) {
+        setQuizzes(data.results);
+        setTotalQuizzes(data.count || 0);
+      } else {
+        setQuizzes(Array.isArray(data) ? data : []);
+        setTotalQuizzes(Array.isArray(data) ? data.length : 0);
+      }
+      setQuizzesPage(page);
       setError('');
     } catch (err) {
       console.error(err);
@@ -93,11 +110,21 @@ export default function AdminDashboard() {
     }
   };
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (page = 1, query = userSearchQuery) => {
     setLoadingUsers(true);
     try {
-      const data = await authService.getUsersList();
-      setUsers(data);
+      const data = await authService.getUsersList({
+        page,
+        search: query
+      });
+      if (data && data.results) {
+        setUsers(data.results);
+        setTotalUsers(data.count || 0);
+      } else {
+        setUsers(Array.isArray(data) ? data : []);
+        setTotalUsers(Array.isArray(data) ? data.length : 0);
+      }
+      setUsersPage(page);
     } catch (err) {
       console.error("Lỗi khi tải danh sách người dùng:", err);
     } finally {
@@ -115,8 +142,8 @@ export default function AdminDashboard() {
       return;
     }
 
-    fetchQuizzes();
-    fetchUsers();
+    fetchQuizzes(1);
+    fetchUsers(1);
   }, [navigate]);
 
   // Load questions for selected quiz
@@ -140,15 +167,33 @@ export default function AdminDashboard() {
     }
   }, [selectedQuizForQuestions]);
 
+  const handleQuizPageChange = async (newPage) => {
+    await fetchQuizzes(newPage);
+  };
+
+  const handleUsersPageChange = async (newPage) => {
+    await fetchUsers(newPage);
+  };
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    fetchQuizzes(searchQuery);
+    fetchQuizzes(1, searchQuery);
   };
 
   const handleReset = () => {
     setSearchQuery('');
     setSearchDesc('');
-    fetchQuizzes('');
+    fetchQuizzes(1, '');
+  };
+
+  const handleUserSearchSubmit = (e) => {
+    e.preventDefault();
+    fetchUsers(1, userSearchQuery);
+  };
+
+  const handleUserReset = () => {
+    setUserSearchQuery('');
+    fetchUsers(1, '');
   };
 
   // --- CRUD QUIZ ACTIONS ---
@@ -426,19 +471,8 @@ export default function AdminDashboard() {
   };
 
   // Filters for displaying lists
-  const filteredQuizzes = quizzes.filter(quiz => {
-    if (!searchDesc) return true;
-    return (quiz.description || '').toLowerCase().includes(searchDesc.toLowerCase());
-  });
-
-  const filteredUsers = users.filter(user => {
-    if (!userSearchQuery) return true;
-    const q = userSearchQuery.toLowerCase();
-    return (
-      (user.username || '').toLowerCase().includes(q) ||
-      (user.email || '').toLowerCase().includes(q)
-    );
-  });
+  const filteredQuizzes = quizzes;
+  const filteredUsers = users;
 
   return (
     <div className="quiz-list-container">
@@ -776,14 +810,51 @@ export default function AdminDashboard() {
                 </table>
               </div>
             )}
+            
+            {/* Phân trang đề thi trong Admin */}
+            {Math.ceil(totalQuizzes / PAGE_SIZE) > 1 && (
+              <div className="pagination-wrapper" style={{ marginTop: '16px', padding: '0 16px 16px' }}>
+                <span className="pagination-info">
+                  Hiển thị {quizzes.length} / {totalQuizzes} đề thi
+                </span>
+                <button
+                  type="button"
+                  className="pagination-btn"
+                  onClick={() => handleQuizPageChange(quizzesPage - 1)}
+                  disabled={quizzesPage === 1}
+                >
+                  <i className="fa-solid fa-angle-left"></i>
+                </button>
+                
+                {Array.from({ length: Math.ceil(totalQuizzes / PAGE_SIZE) }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    className={`pagination-btn ${quizzesPage === p ? 'active' : ''}`}
+                    onClick={() => handleQuizPageChange(p)}
+                  >
+                    {p}
+                  </button>
+                ))}
+                
+                <button
+                  type="button"
+                  className="pagination-btn"
+                  onClick={() => handleQuizPageChange(quizzesPage + 1)}
+                  disabled={quizzesPage === Math.ceil(totalQuizzes / PAGE_SIZE)}
+                >
+                  <i className="fa-solid fa-angle-right"></i>
+                </button>
+              </div>
+            )}
           </div>
         </>
       ) : (
         /* VIEW 2: USERS LIST (Renaming 'Học sinh' to 'Người dùng') */
         <>
           {/* User Search Bar */}
-          <form onSubmit={(e) => e.preventDefault()} className="search-bar-form" style={{ marginTop: '16px' }}>
-            <div className="search-input-group" style={{ gridTemplateColumns: currentUser?.role === 'admin' ? '1fr auto auto' : '1fr auto', alignItems: 'end' }}>
+          <form onSubmit={handleUserSearchSubmit} className="search-bar-form" style={{ marginTop: '16px' }}>
+            <div className="search-input-group" style={{ gridTemplateColumns: currentUser?.role === 'admin' ? '1fr auto auto auto' : '1fr auto auto', alignItems: 'end' }}>
               <div className="search-field">
                 <label htmlFor="search-user">Tìm kiếm người dùng</label>
                 <input
@@ -795,9 +866,12 @@ export default function AdminDashboard() {
                   className="search-input"
                 />
               </div>
+              <button type="submit" className="btn-search" style={{ height: '38px' }}>
+                <i className="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+              </button>
               <button 
                 type="button" 
-                onClick={() => setUserSearchQuery('')} 
+                onClick={handleUserReset} 
                 className="btn-reset" 
                 style={{ height: '38px', padding: '0 16px' }}
               >
@@ -884,6 +958,43 @@ export default function AdminDashboard() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+            
+            {/* Phân trang người dùng trong Admin */}
+            {Math.ceil(totalUsers / PAGE_SIZE) > 1 && (
+              <div className="pagination-wrapper" style={{ marginTop: '16px', padding: '0 16px 16px' }}>
+                <span className="pagination-info">
+                  Hiển thị {users.length} / {totalUsers} người dùng
+                </span>
+                <button
+                  type="button"
+                  className="pagination-btn"
+                  onClick={() => handleUsersPageChange(usersPage - 1)}
+                  disabled={usersPage === 1}
+                >
+                  <i className="fa-solid fa-angle-left"></i>
+                </button>
+                
+                {Array.from({ length: Math.ceil(totalUsers / PAGE_SIZE) }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    className={`pagination-btn ${usersPage === p ? 'active' : ''}`}
+                    onClick={() => handleUsersPageChange(p)}
+                  >
+                    {p}
+                  </button>
+                ))}
+                
+                <button
+                  type="button"
+                  className="pagination-btn"
+                  onClick={() => handleUsersPageChange(usersPage + 1)}
+                  disabled={usersPage === Math.ceil(totalUsers / PAGE_SIZE)}
+                >
+                  <i className="fa-solid fa-angle-right"></i>
+                </button>
               </div>
             )}
           </div>

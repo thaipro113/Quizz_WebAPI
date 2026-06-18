@@ -61,9 +61,9 @@ export const authService = {
     return response.data;
   },
 
-  async getUsersList() {
-    const response = await api.get('/users/');
-    return response.data.results || response.data;
+  async getUsersList(params = {}) {
+    const response = await api.get('/users/', { params });
+    return response.data;
   },
 
   async createUser(userData) {
