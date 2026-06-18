@@ -131,20 +131,6 @@ export default function Register({ onRegister }) {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="role">
-              <i className="fa-solid fa-users"></i> Vai trò
-            </label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              disabled={submitting}
-            >
-              <option value="student">Học sinh (Làm bài thi)</option>
-              <option value="teacher">Giáo viên (Quản lý đề thi)</option>
-            </select>
-          </div>
           
           <button type="submit" className="btn-primary" disabled={submitting}>
             <i className="fa-solid fa-user-plus"></i>

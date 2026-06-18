@@ -1,0 +1,88 @@
+name: Django & React CI
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: QuizDatabase
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      SECRET_KEY: django-insecure-ci-secret-key-placeholder
+      DB_NAME: QuizDatabase
+      DB_USER: postgres
+      DB_PASSWORD: ci_password
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run migrations
+        run: |
+          cd quizz_backend
+          python manage.py migrate
+
+      - name: Run tests
+        run: |
+          cd quizz_backend
+          python manage.py test
+
+  frontend-verification:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: quizz_frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd quizz_frontend
+          npm ci
+
+      - name: Run lint
+        run: |
+          cd quizz_frontend
+          npm run lint
+
+      - name: Run build
+        run: |
+          cd quizz_frontend
+          npm run build

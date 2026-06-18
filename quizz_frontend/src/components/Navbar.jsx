@@ -32,6 +32,18 @@ export default function Navbar({ user, onLogout, darkMode, onToggleTheme }) {
 
           {user ? (
             <>
+              {/* Nút Đi tới Trang Quản Trị cho Giáo viên/Admin */}
+              {(user.role === 'teacher' || user.role === 'admin') && (
+                <button 
+                  className="btn-header-primary" 
+                  onClick={() => navigate('/admin')} 
+                  title="Đi tới Trang Quản Trị"
+                  style={{ marginRight: '4px' }}
+                >
+                  <i className="fa-solid fa-gauge"></i> Quản trị
+                </button>
+              )}
+
               {/* Profile Badge matching user tag in image */}
               <div className="user-badge" onClick={() => navigate('/profile')} style={{ cursor: 'pointer' }} title="Trang cá nhân">
                 <i className="fa-regular fa-user"></i>

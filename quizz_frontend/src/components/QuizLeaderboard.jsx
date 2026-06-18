@@ -108,7 +108,7 @@ export default function QuizLeaderboard() {
               <thead>
                 <tr>
                   <th style={{ width: '80px', textAlign: 'center' }}>HẠNG</th>
-                  <th>HỌC SINH</th>
+                  <th>NGƯỜI DÙNG</th>
                   <th>ĐIỂM SỐ</th>
                   <th>TỶ LỆ</th>
                   <th>THỜI GIAN LÀM</th>
@@ -126,7 +126,7 @@ export default function QuizLeaderboard() {
                     <tr key={item.id} style={rank <= 3 ? { backgroundColor: 'rgba(245, 158, 11, 0.03)' } : {}}>
                       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{getRankBadge(rank)}</td>
                       <td style={{ fontWeight: '700', color: 'var(--text-dark)' }}>
-                        {item.user_detail?.username || item.user?.username || 'Học sinh ẩn danh'}
+                        {item.user_detail?.username || item.user?.username || 'Người dùng ẩn danh'}
                       </td>
                       <td style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--primary)' }}>
                         {item.score} / {item.total_questions}
