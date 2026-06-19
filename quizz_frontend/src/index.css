@@ -698,6 +698,11 @@ body.dark-mode .quiz-table tr:hover td {
   color: var(--danger-text);
 }
 
+.badge-status.warning {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: var(--warning);
+}
+
 /* Action icons matching view/edit/delete buttons in image */
 .table-actions {
   display: flex;
