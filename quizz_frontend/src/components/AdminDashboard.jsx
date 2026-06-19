@@ -143,7 +143,9 @@ export default function AdminDashboard() {
     }
 
     fetchQuizzes(1);
-    fetchUsers(1);
+    if (user.role === 'admin') {
+      fetchUsers(1);
+    }
   }, [navigate]);
 
   // Load questions for selected quiz
@@ -477,7 +479,7 @@ export default function AdminDashboard() {
   return (
     <div className="quiz-list-container">
       {/* 1. Header Hero Panel */}
-      <div className="quiz-list-hero">
+    <div className={`quiz-list-hero ${currentUser?.role === 'admin' ? 'admin-cols' : 'teacher-cols'}`}>
         <div className="stat-card">
           <div className="stat-info">
             <div className="stat-label">TỔNG ĐỀ THI</div>
@@ -488,15 +490,17 @@ export default function AdminDashboard() {
           </div>
         </div>
         
-        <div className="stat-card">
-          <div className="stat-info">
-            <div className="stat-label">TỔNG TÀI KHOẢN</div>
-            <div className="stat-value">{users.length}</div>
+        {currentUser?.role === 'admin' && (
+          <div className="stat-card">
+            <div className="stat-info">
+              <div className="stat-label">TỔNG TÀI KHOẢN</div>
+              <div className="stat-value">{users.length}</div>
+            </div>
+            <div className="stat-icon icon-green">
+              <i className="fa-solid fa-users"></i>
+            </div>
           </div>
-          <div className="stat-icon icon-green">
-            <i className="fa-solid fa-users"></i>
-          </div>
-        </div>
+        )}
 
         <div className="stat-card">
           <div className="stat-info">
@@ -536,24 +540,26 @@ export default function AdminDashboard() {
         </div>
       ) : (
         /* TAB SELECTOR (Only shown in main view) */
-        <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-          <button 
-            type="button"
-            className={activeTab === 'quizzes' ? 'btn-header-primary' : 'btn-header-action'}
-            onClick={() => setActiveTab('quizzes')}
-            style={{ borderRadius: '8px', padding: '10px 18px' }}
-          >
-            <i className="fa-solid fa-book"></i> Quản Lý Đề Thi
-          </button>
-          <button 
-            type="button"
-            className={activeTab === 'users' ? 'btn-header-primary' : 'btn-header-action'}
-            onClick={() => setActiveTab('users')}
-            style={{ borderRadius: '8px', padding: '10px 18px' }}
-          >
-            <i className="fa-solid fa-users"></i> Quản Lý Người Dùng
-          </button>
-        </div>
+        currentUser?.role === 'admin' && (
+          <div className="admin-tab-group">
+            <button 
+              type="button"
+              className={activeTab === 'quizzes' ? 'btn-header-primary' : 'btn-header-action'}
+              onClick={() => setActiveTab('quizzes')}
+              style={{ borderRadius: '8px', padding: '10px 18px' }}
+            >
+              <i className="fa-solid fa-book"></i> Quản Lý Đề Thi
+            </button>
+            <button 
+              type="button"
+              className={activeTab === 'users' ? 'btn-header-primary' : 'btn-header-action'}
+              onClick={() => setActiveTab('users')}
+              style={{ borderRadius: '8px', padding: '10px 18px' }}
+            >
+              <i className="fa-solid fa-users"></i> Quản Lý Người Dùng
+            </button>
+          </div>
+        )
       )}
 
       {/* 2. DYNAMIC WORKSPACE VIEW */}
@@ -678,12 +684,12 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
-      ) : activeTab === 'quizzes' ? (
+      ) : (activeTab === 'quizzes' || currentUser?.role !== 'admin') ? (
         /* VIEW 1: QUIZZES MANAGEMENT TABLE & CRUD */
         <>
           {/* Search bar & Create Quiz button */}
           <form onSubmit={handleSearchSubmit} className="search-bar-form" style={{ marginTop: '16px' }}>
-            <div className="search-input-group" style={{ gridTemplateColumns: '1fr 1fr auto auto auto' }}>
+            <div className="search-input-group admin-search-group-5">
               <div className="search-field">
                 <label htmlFor="search-title">Tiêu đề đề thi</label>
                 <input
@@ -854,7 +860,7 @@ export default function AdminDashboard() {
         <>
           {/* User Search Bar */}
           <form onSubmit={handleUserSearchSubmit} className="search-bar-form" style={{ marginTop: '16px' }}>
-            <div className="search-input-group" style={{ gridTemplateColumns: currentUser?.role === 'admin' ? '1fr auto auto auto' : '1fr auto auto', alignItems: 'end' }}>
+            <div className={`search-input-group ${currentUser?.role === 'admin' ? 'admin-search-group-4' : 'admin-search-group-3'}`}>
               <div className="search-field">
                 <label htmlFor="search-user">Tìm kiếm người dùng</label>
                 <input

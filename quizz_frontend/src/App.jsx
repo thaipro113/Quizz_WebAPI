@@ -60,6 +60,9 @@ function App() {
   // Component bảo vệ các Route không cho truy cập khi đã Đăng nhập
   const PublicRoute = ({ children }) => {
     if (user) {
+      if (user.role === 'admin') {
+        return <Navigate to="/admin" replace />;
+      }
       return <Navigate to="/quizzes" replace />;
     }
     return children;

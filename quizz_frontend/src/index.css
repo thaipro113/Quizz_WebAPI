@@ -443,6 +443,14 @@ button, input, select {
   gap: 16px;
 }
 
+.quiz-list-hero.admin-cols {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.quiz-list-hero.teacher-cols {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .stat-card {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
@@ -519,6 +527,25 @@ button, input, select {
 .search-input-group {
   display: grid;
   grid-template-columns: 1fr 1fr auto auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.admin-search-group-5 {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto auto;
+  gap: 12px;
+  align-items: end;
+}
+.admin-search-group-4 {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 12px;
+  align-items: end;
+}
+.admin-search-group-3 {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
   gap: 12px;
   align-items: end;
 }
@@ -1168,18 +1195,50 @@ body.dark-mode .answer-option-item.selected {
     justify-content: center;
   }
 
+  .quiz-list-hero.admin-cols,
+  .quiz-list-hero.teacher-cols,
   .quiz-list-hero {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 
-  .search-input-group {
-    grid-template-columns: 1fr;
+  /* Unify search input group stacking and styling on mobile */
+  .search-input-group,
+  .admin-search-group-5,
+  .admin-search-group-4,
+  .admin-search-group-3 {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
   }
 
+  .search-input-group button,
+  .admin-search-group-5 button,
+  .admin-search-group-4 button,
+  .admin-search-group-3 button,
   .btn-search,
   .btn-reset {
-    width: 100%;
-    justify-content: center;
+    width: 100% !important;
+    height: 40px !important;
+    border-radius: 8px !important;
+    justify-content: center !important;
+    margin-top: 4px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    box-sizing: border-box;
+  }
+
+  .search-input-group .search-field,
+  .admin-search-group-5 .search-field,
+  .admin-search-group-4 .search-field,
+  .admin-search-group-3 .search-field {
+    width: 100% !important;
+  }
+
+  .quiz-table {
+    min-width: 650px;
+  }
+  
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
   }
 
   .exam-layout,
@@ -1194,6 +1253,77 @@ body.dark-mode .answer-option-item.selected {
 
   .question-grid {
     grid-template-columns: repeat(8, 1fr);
+  }
+
+  .question-manage-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+  .question-manage-header div {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+.admin-tab-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (max-width: 576px) {
+  .admin-tab-group {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+  .admin-tab-group button {
+    width: 100% !important;
+    justify-content: center;
+    padding: 12px !important;
+    font-size: 0.95rem;
+  }
+
+  .modal-content {
+    width: 92%;
+    padding: 16px;
+    gap: 12px;
+  }
+  .modal-footer {
+    padding-top: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .quiz-list-hero.admin-cols,
+  .quiz-list-hero.teacher-cols,
+  .quiz-list-hero {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  .stat-card {
+    padding: 14px 16px;
+  }
+  .stat-value {
+    font-size: 1.3rem;
+  }
+
+  .quiz-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .pagination-wrapper {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .pagination-info {
+    width: 100%;
+    text-align: center;
+    margin-right: 0;
+    margin-bottom: 8px;
   }
 }
 
