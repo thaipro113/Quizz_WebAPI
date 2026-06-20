@@ -8,7 +8,17 @@ export default function Navbar({ user, onLogout, darkMode, onToggleTheme }) {
     <header className="app-header">
       <div className="header-container">
         {/* Left Branding matching image */}
-        <div className="brand" onClick={() => navigate('/quizzes')} style={{ cursor: 'pointer' }}>
+        <div 
+          className="brand" 
+          onClick={() => {
+            if (user?.role === 'admin' || user?.role === 'teacher') {
+              navigate('/admin');
+            } else {
+              navigate('/quizzes');
+            }
+          }} 
+          style={{ cursor: 'pointer' }}
+        >
           <div className="logo-box">
             <i className="fa-solid fa-book"></i>
           </div>

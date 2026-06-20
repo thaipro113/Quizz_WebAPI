@@ -1851,3 +1851,31 @@ body.dark-mode .btn-view-detail:hover {
   color: var(--text-muted);
   margin-right: 12px;
 }
+
+.btn-danger {
+  width: 100%;
+  background-color: var(--danger);
+  color: white;
+  border: 1px solid var(--danger);
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
+}
+
+.btn-danger:hover:not(:disabled) {
+  opacity: 0.95;
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

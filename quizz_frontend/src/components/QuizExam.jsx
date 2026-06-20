@@ -10,6 +10,7 @@ export default function QuizExam() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState(() => {
@@ -98,7 +99,7 @@ export default function QuizExam() {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     const totalQuestionsCount = questions.length;
     const answeredCount = Object.keys(answers).length;
 
@@ -107,10 +108,11 @@ export default function QuizExam() {
       return;
     }
 
-    if (!window.confirm('Bạn có chắc chắn muốn nộp bài thi này?')) {
-      return;
-    }
+    setShowConfirmModal(true);
+  };
 
+  const executeSubmit = async () => {
+    setShowConfirmModal(false);
     const formattedAnswers = Object.entries(answers).map(([qId, ansId]) => ({
       question_id: parseInt(qId),
       selected_answer_id: ansId,
@@ -269,6 +271,36 @@ export default function QuizExam() {
             </button>
           </div>
         </main>
+      {showConfirmModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '450px' }}>
+            <div className="modal-header">
+              <h3>Xác nhận nộp bài</h3>
+              <button className="modal-close" onClick={() => setShowConfirmModal(false)}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <div className="modal-body auth-form" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', margin: 0, lineHeight: '1.6' }}>
+                Bạn có chắc chắn muốn nộp bài thi này? Hãy kiểm tra kỹ lại các câu trả lời của mình trước khi nhấn xác nhận.
+              </p>
+              <div className="modal-footer" style={{ padding: 0, marginTop: '8px', gap: '12px' }}>
+                <button type="button" className="btn-reset" onClick={() => setShowConfirmModal(false)} style={{ width: 'auto', marginTop: 0 }}>
+                  Hủy bỏ
+                </button>
+                <button 
+                  type="button" 
+                  className="btn-primary" 
+                  style={{ width: 'auto', marginTop: 0 }}
+                  onClick={executeSubmit}
+                >
+                  <i className="fa-solid fa-check"></i> Xác nhận
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

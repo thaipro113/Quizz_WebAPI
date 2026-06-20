@@ -54,6 +54,25 @@ export default function AdminDashboard() {
 
   const [modalError, setModalError] = useState('');
 
+  // 5. Confirm Modal
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: 'Xác nhận',
+    message: '',
+    onConfirm: null,
+    type: 'danger'
+  });
+
+  const triggerConfirm = (message, onConfirm, title = 'Xác nhận hành động', type = 'danger') => {
+    setConfirmConfig({
+      isOpen: true,
+      title,
+      message,
+      onConfirm,
+      type
+    });
+  };
+
   const formatValidationError = (errorObj) => {
     if (!errorObj) return 'Thao tác thất bại. Vui lòng kiểm tra lại.';
     if (typeof errorObj === 'string') return errorObj;
@@ -244,18 +263,22 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteQuiz = async (quizId, quizTitle) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa đề thi "${quizTitle}"?\nHành động này cũng sẽ xóa tất cả câu hỏi và đáp án liên quan.`)) {
-      return;
-    }
-    try {
-      await quizService.deleteQuiz(quizId);
-      alert('Xóa đề thi thành công!');
-      fetchQuizzes(searchQuery);
-    } catch (err) {
-      console.error(err);
-      alert('Xóa đề thi thất bại. Vui lòng thử lại.');
-    }
+  const handleDeleteQuiz = (quizId, quizTitle) => {
+    triggerConfirm(
+      `Bạn có chắc chắn muốn xóa đề thi "${quizTitle}"?\nHành động này cũng sẽ xóa tất cả câu hỏi và đáp án liên quan.`,
+      async () => {
+        try {
+          await quizService.deleteQuiz(quizId);
+          alert('Xóa đề thi thành công!');
+          fetchQuizzes(searchQuery);
+        } catch (err) {
+          console.error(err);
+          alert('Xóa đề thi thất bại. Vui lòng thử lại.');
+        }
+      },
+      'Xóa Đề Thi',
+      'danger'
+    );
   };
 
   // --- CRUD QUESTION ACTIONS ---
@@ -304,18 +327,22 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteQuestion = async (questionId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa câu hỏi này cùng các đáp án lựa chọn tương ứng?')) {
-      return;
-    }
-    try {
-      await quizService.deleteQuestion(questionId);
-      alert('Xóa câu hỏi thành công!');
-      fetchQuestionsForQuiz(selectedQuizForQuestions.id);
-    } catch (err) {
-      console.error(err);
-      alert('Xóa câu hỏi thất bại.');
-    }
+  const handleDeleteQuestion = (questionId) => {
+    triggerConfirm(
+      'Bạn có chắc chắn muốn xóa câu hỏi này cùng các đáp án lựa chọn tương ứng?',
+      async () => {
+        try {
+          await quizService.deleteQuestion(questionId);
+          alert('Xóa câu hỏi thành công!');
+          fetchQuestionsForQuiz(selectedQuizForQuestions.id);
+        } catch (err) {
+          console.error(err);
+          alert('Xóa câu hỏi thất bại.');
+        }
+      },
+      'Xóa Câu Hỏi',
+      'danger'
+    );
   };
 
   // --- CRUD ANSWER ACTIONS ---
@@ -362,18 +389,22 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteAnswer = async (answerId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa đáp án lựa chọn này?')) {
-      return;
-    }
-    try {
-      await quizService.deleteAnswer(answerId);
-      alert('Xóa đáp án thành công!');
-      fetchQuestionsForQuiz(selectedQuizForQuestions.id);
-    } catch (err) {
-      console.error(err);
-      alert('Xóa đáp án thất bại.');
-    }
+  const handleDeleteAnswer = (answerId) => {
+    triggerConfirm(
+      'Bạn có chắc chắn muốn xóa đáp án lựa chọn này?',
+      async () => {
+        try {
+          await quizService.deleteAnswer(answerId);
+          alert('Xóa đáp án thành công!');
+          fetchQuestionsForQuiz(selectedQuizForQuestions.id);
+        } catch (err) {
+          console.error(err);
+          alert('Xóa đáp án thất bại.');
+        }
+      },
+      'Xóa Đáp Án',
+      'danger'
+    );
   };
 
   // --- CRUD USER ACTIONS ---
@@ -454,22 +485,26 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteUser = async (userId, username) => {
+  const handleDeleteUser = (userId, username) => {
     if (currentUser && currentUser.id === userId) {
       alert('Bạn không thể tự xóa tài khoản của chính mình.');
       return;
     }
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa tài khoản "${username}"?`)) {
-      return;
-    }
-    try {
-      await authService.deleteUser(userId);
-      alert('Xóa tài khoản thành công!');
-      fetchUsers();
-    } catch (err) {
-      console.error(err);
-      alert('Xóa tài khoản thất bại. Chỉ có Quản trị viên mới có quyền xóa tài khoản.');
-    }
+    triggerConfirm(
+      `Bạn có chắc chắn muốn xóa tài khoản "${username}"?`,
+      async () => {
+        try {
+          await authService.deleteUser(userId);
+          alert('Xóa tài khoản thành công!');
+          fetchUsers();
+        } catch (err) {
+          console.error(err);
+          alert('Xóa tài khoản thất bại. Chỉ có Quản trị viên mới có quyền xóa tài khoản.');
+        }
+      },
+      'Xóa Tài Khoản',
+      'danger'
+    );
   };
 
   // Filters for displaying lists
@@ -1277,6 +1312,43 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 5. CONFIRMATION MODAL */}
+      {confirmConfig.isOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '450px' }}>
+            <div className="modal-header">
+              <h3>{confirmConfig.title}</h3>
+              <button className="modal-close" onClick={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <div className="modal-body auth-form" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', margin: 0, lineHeight: '1.6', whiteSpace: 'pre-line' }}>
+                {confirmConfig.message}
+              </p>
+              <div className="modal-footer" style={{ padding: 0, marginTop: '8px', gap: '12px' }}>
+                <button type="button" className="btn-reset" onClick={() => setConfirmConfig({ ...confirmConfig, isOpen: false })} style={{ width: 'auto', marginTop: 0 }}>
+                  Hủy bỏ
+                </button>
+                <button 
+                  type="button" 
+                  className={confirmConfig.type === 'danger' ? 'btn-danger' : 'btn-primary'} 
+                  style={{ width: 'auto', marginTop: 0 }}
+                  onClick={() => {
+                    if (confirmConfig.onConfirm) {
+                      confirmConfig.onConfirm();
+                    }
+                    setConfirmConfig({ ...confirmConfig, isOpen: false });
+                  }}
+                >
+                  <i className="fa-solid fa-check"></i> Xác nhận
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
