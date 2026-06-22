@@ -1057,6 +1057,15 @@ body.dark-mode .answer-option-item.selected {
   align-items: start;
 }
 
+@media (min-width: 769px) {
+  .exam-sidebar,
+  .result-sidebar {
+    position: sticky;
+    top: 90px;
+    align-self: start;
+  }
+}
+
 .question-number-badge {
   aspect-ratio: 1;
   border-radius: 8px;
