@@ -10,6 +10,20 @@ jobs:
   backend-test:
     name: Backend Test (Django)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: quizz
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 12345
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,6 +40,12 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Django tests
+        env:
+          DB_NAME: quizz
+          DB_USER: postgres
+          DB_PASSWORD: 12345
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
         run: |
           cd quizz_backend
           python manage.py test
