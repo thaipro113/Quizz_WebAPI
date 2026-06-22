@@ -14,6 +14,8 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
+from django.core.management.utils import get_random_secret_key
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
@@ -22,7 +24,7 @@ load_dotenv(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-+3d&^umyct%x_!kr5x)v9qs40^7r3dluilijr6pn^)fk(h6(af')    
+SECRET_KEY = os.environ.get('SECRET_KEY', get_random_secret_key())    
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
@@ -159,6 +161,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'Quizz.pagination.CustomPagination',
     'PAGE_SIZE': 10,
+    'EXCEPTION_HANDLER': 'Quizz.exceptions.custom_exception_handler',
 }
 
 SIMPLE_JWT = {
