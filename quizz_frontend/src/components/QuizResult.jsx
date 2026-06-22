@@ -105,6 +105,13 @@ export default function QuizResult() {
                   <div
                     key={q.id}
                     className={`question-number-badge ${isCorrect ? 'correct' : 'incorrect'}`}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      const element = document.getElementById(`question-card-${q.id}`);
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
                   >
                     {idx + 1}
                   </div>
@@ -131,6 +138,7 @@ export default function QuizResult() {
               return (
                 <div
                   key={q.id}
+                  id={`question-card-${q.id}`}
                   className={`result-question-card ${isCorrect ? 'border-correct' : 'border-incorrect'}`}
                 >
                   <div className="result-question-title">
